@@ -38,7 +38,6 @@ public class SimulatorImpl implements Simulator {
 		long delta = 0;
 		long debug = 0; //DEBUG
 		while (true) {
-		
 			if(debug != 0){ //DEBUG
 				System.out.println("Elpased: "+(System.currentTimeMillis()-debug)+" ms");
 			}	
@@ -69,7 +68,7 @@ public class SimulatorImpl implements Simulator {
 		}
 		try {
 			ts2Date = sdf.parse(ts2);
-		} catch (ParseException e) {
+		} catch (ParseException | NullPointerException e) {
 			System.out.println("[Warning]: Apparently the last database tuple has been reached ");
 			return -1;
 		}
