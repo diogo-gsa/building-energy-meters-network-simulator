@@ -29,7 +29,8 @@ public class SimulatorImpl implements Simulator {
 	private String meterDatabaseTable = null;
 	private TimestampIndexPair tsIndexPair = null;
 	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
-
+	private volatile int speedTimeFactor = 1; // default value: simulation time = real  time 
+	
 	public SimulatorImpl(EnergyMeter em) {
 		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
 		meterDatabaseTable = getMeterDatabaseTable(em);
@@ -60,11 +61,25 @@ public class SimulatorImpl implements Simulator {
 				return;
 			}
 			tsIndexPair =  getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
-			Thread.sleep(delta);
+			System.out.println("Delta: "+delta);
+			Thread.sleep(delta/speedTimeFactor);
 		}
 
 	}
 
+	public boolean setSpeedTimeFactor(int newFactor){
+		if(newFactor > 0){
+			speedTimeFactor = newFactor;
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	public int getSpeedTimeFactor(){
+		return speedTimeFactor;
+	}
+	
 	private EnergyMeasureTupleDTO getDatastreamTupleByTimestamp(String targetTS){
 		String queryStatement = "SELECT * " + 
 								"FROM " + meterDatabaseTable + 

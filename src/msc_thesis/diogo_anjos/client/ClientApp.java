@@ -20,8 +20,11 @@ public class ClientApp implements SimulatorClient {
 		
 		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
 		sim.registerNewClient(client);
-		sim.start();
 		
+		long start = System.currentTimeMillis();
+		sim.start();
+		System.out.println("TotalTime= "+(System.currentTimeMillis()-start)+" ms");
+	
 	}
 
 	@Override

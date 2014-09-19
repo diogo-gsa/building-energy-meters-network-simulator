@@ -14,6 +14,5 @@ public enum EnergyMeter {
     DEPARTMENT_16,
     LAB_1_58_MIT,
     UTA_A4,
-    
-    TEST
+    TEST	// Phantom table!
 }
