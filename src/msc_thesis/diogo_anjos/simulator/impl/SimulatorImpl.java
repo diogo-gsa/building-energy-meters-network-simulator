@@ -33,17 +33,18 @@ public class SimulatorImpl implements Simulator {
 	private long simulationStartTime = 0;
 	private volatile boolean keepWalking = false;
 	private boolean alreadyStarted = false;
+	private EnergyMeter meter = null;
 	
 	public SimulatorImpl(EnergyMeter em) {
-		// TODO ponder passar isto para dentro do start()
-		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
-		meterDatabaseTable = getMeterDatabaseTable(em);
-		tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
+		meter = em;
 	}
 
 	public void start() {
 		keepWalking = true;
 		if (!alreadyStarted) {
+			database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
+			meterDatabaseTable = getMeterDatabaseTable(meter);
+			tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
 			simulationStartTime = System.currentTimeMillis();
 			RoadRunner rr = new RoadRunner();
 			rr.start();
