@@ -7,7 +7,16 @@ package msc_thesis.diogo_anjos.simulator;
 
 public interface Simulator {
 
-	public void pushDatastreamToClients(EnergyMeasureTupleDTO tuple);
 	public void registerNewClient(SimulatorClient client);
 	
+	public void start();
+	
+	public void stop();
+	
+	public boolean setSpeedTimeFactor(int newFactor);
+	
+	public int getSpeedTimeFactor();
+	
+	public void destroy();
+
 }

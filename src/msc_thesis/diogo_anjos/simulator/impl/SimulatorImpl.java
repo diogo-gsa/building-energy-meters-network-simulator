@@ -29,18 +29,16 @@ public class SimulatorImpl implements Simulator {
 	private String meterDatabaseTable = null;
 	private TimestampIndexPair tsIndexPair = null;
 	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
-	private volatile int speedTimeFactor = 1; // default value: simulation time
+	private volatile int speedTimeFactor = 1;
 	private long simulationStartTime = 0;
-												// = real time
 	private volatile boolean keepWalking = false;
 	private boolean alreadyStarted = false;
-
+	
 	public SimulatorImpl(EnergyMeter em) {
 		// TODO ponder passar isto para dentro do start()
 		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
 		meterDatabaseTable = getMeterDatabaseTable(em);
 		tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
-		// System.out.println("DEBUG: "+meterDatabaseTable+"|"+tsIndexPair+"\n");
 	}
 
 	public void start() {
@@ -49,10 +47,11 @@ public class SimulatorImpl implements Simulator {
 			simulationStartTime = System.currentTimeMillis();
 			RoadRunner rr = new RoadRunner();
 			rr.start();
+			alreadyStarted = true;
 		}
 	}
 
-	public void stop() {
+	public void stop() { 
 		keepWalking = false;
 	}
 
@@ -60,42 +59,27 @@ public class SimulatorImpl implements Simulator {
 		@Override
 		public void run() {
 			long delta = 0;
-			long debug = 0; // DEBUG
-
 			while (true) {
 				while (keepWalking) {
-					
-					if (debug != 0) { // DEBUG
-						System.out.println("Elpased: " + (System.currentTimeMillis() - debug) + " ms");
-					}
-					System.out.println("Input: " + tsIndexPair.getFirstTS()); // DEBUG
 					EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
-					// System.out.println("Debug: "+tupleDTO+"\n"); //DEBUG
-
-					pushDatastreamToClients(tupleDTO); // TODO estas a testar
-														// isto
-
-					debug = System.currentTimeMillis(); // DEUG
-
+					pushDatastreamToClients(tupleDTO);
 					delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
 					if (delta == -1) {
 						String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
-						System.out.println("The end of database has been reached. Simulation completed! ("+duration+")");
+						System.out.println("The end of database has been reached. Simulation completed! (" + duration + ")");
 						return;
 					}
 					tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
-					System.out.println("Delta: " + delta);
 					try {
-						Thread.sleep(delta / speedTimeFactor);
+						Thread.sleep(delta/speedTimeFactor);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
 			}
 		}
-	
+
 	}
-	
 
 	public boolean setSpeedTimeFactor(int newFactor) {
 		if (newFactor > 0) {
@@ -111,9 +95,10 @@ public class SimulatorImpl implements Simulator {
 	}
 
 	private EnergyMeasureTupleDTO getDatastreamTupleByTimestamp(String targetTS) {
-		String queryStatement = "SELECT * " + "FROM " + meterDatabaseTable + "WHERE measure_timestamp = " + "\'" + targetTS + "\'" + "LIMIT 1"; // just
-																																				// in
-																																				// case
+		String queryStatement = "SELECT * " + 
+								"FROM " + meterDatabaseTable + 
+								"WHERE measure_timestamp = " + "\'" + targetTS + "\'" + 
+								"LIMIT 1"; // just
 		try {
 			return buildDtoFromResultSet(executeQuery(queryStatement));
 		} catch (SQLException e) {
@@ -167,14 +152,18 @@ public class SimulatorImpl implements Simulator {
 	}
 
 	private TimestampIndexPair getNextTwoMeasureTimestamps(String meterDatabaseTable, String pivotTimestamp) {
-		String queryStatement = "SELECT measure_timestamp " + "FROM " + meterDatabaseTable + "WHERE measure_timestamp > " + "\'" + pivotTimestamp + "\'" +
-		// "WHERE measure_timestamp > " + "\'2014-01-01 00:00:01\'" +
-		" ORDER BY measure_timestamp ASC " + "LIMIT 2";
+		String queryStatement = "SELECT measure_timestamp " + 
+								"FROM " + meterDatabaseTable + 
+								"WHERE measure_timestamp > " + "\'" + pivotTimestamp + "\'" +
+								" ORDER BY measure_timestamp ASC " + "LIMIT 2";
 		return executeQueryAndBuildResultPair(queryStatement);
 	}
 
 	private TimestampIndexPair getInitialMeasureTimestamp(String meterDatabaseTable) {
-		String queryStatement = "SELECT measure_timestamp " + "FROM " + meterDatabaseTable + "ORDER BY measure_timestamp ASC " + "LIMIT 2";
+		String queryStatement = "SELECT measure_timestamp " + 
+								"FROM " + meterDatabaseTable + 
+								"ORDER BY measure_timestamp ASC " + 
+								"LIMIT 2";
 		return executeQueryAndBuildResultPair(queryStatement);
 	}
 
@@ -305,8 +294,7 @@ public class SimulatorImpl implements Simulator {
 		}
 	}
 
-	@Override
-	public void pushDatastreamToClients(EnergyMeasureTupleDTO tuple) {
+	private void pushDatastreamToClients(EnergyMeasureTupleDTO tuple) {
 		for (SimulatorClient sc : clientsLits) {
 			sc.receiveDatastream(tuple);
 		}
@@ -318,38 +306,13 @@ public class SimulatorImpl implements Simulator {
 
 	}
 
-	/*
-	 * public void roadRunner() throws InterruptedException { long delta = 0;
-	 * long debug = 0; //DEBUG
-	 * 
-	 * 
-	 * while (true) { if(debug != 0){ //DEBUG
-	 * System.out.println("Elpased: "+(System.currentTimeMillis()-debug)+" ms");
-	 * } System.out.println("Input: " + tsIndexPair.getFirstTS()); //DEBUG
-	 * EnergyMeasureTupleDTO tupleDTO =
-	 * getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS()); //
-	 * System.out.println("Debug: "+tupleDTO+"\n"); //DEBUG
-	 * 
-	 * pushDatastreamToClients(tupleDTO); //TODO estas a testar isto
-	 * 
-	 * debug = System.currentTimeMillis(); //DEUG
-	 * 
-	 * delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(),
-	 * tsIndexPair.getSecondTS()); if(delta == -1 ){ System.out.println(
-	 * "The end of database has been reached. Simulation completed!"); return; }
-	 * tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable,
-	 * tsIndexPair.getFirstTS()); System.out.println("Delta: "+delta);
-	 * Thread.sleep(delta/speedTimeFactor); }
-	 * 
-	 * }
-	 */
-	public static String milisecondsTo_HH_MM_SS_format(long miliseconds) {
-	    long seconds =  miliseconds/1000;
-	    long ms = miliseconds % 1000;
+	private static String milisecondsTo_HH_MM_SS_format(long miliseconds) {
+		long seconds = miliseconds / 1000;
+		long ms = miliseconds % 1000;
 		long s = seconds % 60;
-	    long m = (seconds / 60) % 60;
-	    long h = (seconds / (60 * 60));
-	    return String.format("%d:%02d:%02d:%03d", h,m,s,ms);
+		long m = (seconds / 60) % 60;
+		long h = (seconds / (60 * 60));
+		return String.format("%d:%02d:%02d:%03d", h, m, s, ms);
 	}
 
 }
