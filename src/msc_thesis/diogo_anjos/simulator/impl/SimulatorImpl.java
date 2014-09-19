@@ -12,26 +12,28 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import msc_thesis.diogo_anjos.simulator.EnergyMeasureTupleDTO;
 import msc_thesis.diogo_anjos.simulator.EnergyMeter;
 import msc_thesis.diogo_anjos.simulator.Simulator;
+import msc_thesis.diogo_anjos.simulator.SimulatorClient;
 
 public class SimulatorImpl implements Simulator {
 
 	private Connection database = null;
 	private String meterDatabaseTable = null;
 	private TimestampIndexPair tsIndexPair = null;
-	private boolean running = false;
+	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
 
 	public SimulatorImpl(EnergyMeter em) {
 		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
 		meterDatabaseTable = getMeterDatabaseTable(em);
 		tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
-
 		//System.out.println("DEBUG: "+meterDatabaseTable+"|"+tsIndexPair+"\n");
 
 	}
@@ -39,13 +41,16 @@ public class SimulatorImpl implements Simulator {
 	public void start() throws InterruptedException {
 		long delta = 0;
 		long debug = 0; //DEBUG
+		
 		while (true) {
 			if(debug != 0){ //DEBUG
 				System.out.println("Elpased: "+(System.currentTimeMillis()-debug)+" ms");
 			}	
 			System.out.println("Input: " + tsIndexPair.getFirstTS()); //DEBUG
 			EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
-			System.out.println("Debug: "+tupleDTO+"\n"); //DEBUG /TODO estás aqui
+//			System.out.println("Debug: "+tupleDTO+"\n"); //DEBUG 
+		
+			pushDatastreamToClients(tupleDTO); //TODO estas a testar isto
 			
 			debug = System.currentTimeMillis(); //DEUG
 			
@@ -262,6 +267,18 @@ public class SimulatorImpl implements Simulator {
 			return "<TS1=" + firstTS + ", TS2=" + secondTS + ">";
 
 		}
+	}
+
+	@Override
+	public void pushDatastreamToClients(EnergyMeasureTupleDTO tuple) {
+		for(SimulatorClient sc : clientsLits){
+			sc.receiveDatastream(tuple);
+		}
+	}
+
+	@Override
+	public void registerNewClient(SimulatorClient client) {
+		clientsLits.add(client);
 	}
 
 }

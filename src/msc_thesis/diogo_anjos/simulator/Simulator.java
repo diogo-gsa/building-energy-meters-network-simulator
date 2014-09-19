@@ -6,5 +6,8 @@ package msc_thesis.diogo_anjos.simulator;
 
 
 public interface Simulator {
-    
+
+	public void pushDatastreamToClients(EnergyMeasureTupleDTO tuple);
+	public void registerNewClient(SimulatorClient client);
+	
 }
