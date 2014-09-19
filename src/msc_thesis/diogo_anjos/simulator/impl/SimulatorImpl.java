@@ -25,6 +25,7 @@ public class SimulatorImpl implements Simulator {
 	private Connection database = null;
 	private String meterDatabaseTable = null;
 	private TimestampIndexPair tsIndexPair = null;
+	private boolean running = false;
 
 	public SimulatorImpl(EnergyMeter em) {
 		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
@@ -44,13 +45,15 @@ public class SimulatorImpl implements Simulator {
 			}	
 			System.out.println("Input: " + tsIndexPair.getFirstTS()); //DEBUG
 			EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
-			System.out.println("Debug: "+ tupleDTO); //DEBUG
+			System.out.println("Debug: "+tupleDTO+"\n"); //DEBUG /TODO estás aqui
 			
 			debug = System.currentTimeMillis(); //DEUG
 			
 			delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
-			if(delta == -1 ) 
+			if(delta == -1 ){
+				System.out.println("The end of database has been reached. Simulation completed!");
 				return;
+			}
 			tsIndexPair =  getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
 			Thread.sleep(delta);
 		}
@@ -60,7 +63,7 @@ public class SimulatorImpl implements Simulator {
 	private EnergyMeasureTupleDTO getDatastreamTupleByTimestamp(String targetTS){
 		String queryStatement = "SELECT * " + 
 								"FROM " + meterDatabaseTable + 
-								"WHERE measure_timestamp > "+"\'"+targetTS+"\'"+ 
+								"WHERE measure_timestamp = "+"\'"+targetTS+"\'"+ 
 								"LIMIT 1"; //just in case
 		try {
 			return buildDtoFromResultSet(executeQuery(queryStatement));
@@ -109,7 +112,6 @@ public class SimulatorImpl implements Simulator {
 		try {
 			ts2Date = sdf.parse(ts2);
 		} catch (ParseException | NullPointerException e) {
-			System.out.println("[Warning]: Apparently the last database tuple has been reached ");
 			return -1;
 		}
 		return (ts2Date.getTime() - ts1Date.getTime());
