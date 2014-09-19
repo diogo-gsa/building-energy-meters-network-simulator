@@ -9,9 +9,6 @@ public class EnergyMeasureTupleDTO {
 	private String meter_location = null;
 	
 	private Double ph1_ampere = null;
-	
-
-
 	private Double ph1_powerFactor = null;
 	private Double ph1_volt = null;
 	
@@ -114,6 +111,12 @@ public class EnergyMeasureTupleDTO {
 		return Double.parseDouble(value);
 	}
 	
-	
+	@Override
+	public String toString() {
+		return "<ts="+measure_ts+",location="+meter_location+
+				",ph1{a="+ph1_ampere+",pf="+ph1_powerFactor+",v="+ph1_volt+"}," +
+				"ph2{a="+ph2_ampere+",pf="+ph2_powerFactor+",v="+ph2_volt+"}," +
+				"ph3{a="+ph3_ampere+",pf="+ph3_powerFactor+",v="+ph3_volt+"}>";
+	}
 	
 }

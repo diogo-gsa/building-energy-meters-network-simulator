@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import msc_thesis.diogo_anjos.simulator.EnergyMeasureTupleDTO;
 import msc_thesis.diogo_anjos.simulator.EnergyMeter;
 import msc_thesis.diogo_anjos.simulator.Simulator;
 
@@ -41,9 +42,11 @@ public class SimulatorImpl implements Simulator {
 			if(debug != 0){ //DEBUG
 				System.out.println("Elpased: "+(System.currentTimeMillis()-debug)+" ms");
 			}	
-			System.out.println("Input: " + tsIndexPair.getFirstTS());
-			debug = System.currentTimeMillis(); //DEUG
+			System.out.println("Input: " + tsIndexPair.getFirstTS()); //DEBUG
+			EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
+			System.out.println("Debug: "+ tupleDTO); //DEBUG
 			
+			debug = System.currentTimeMillis(); //DEUG
 			
 			delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
 			if(delta == -1 ) 
@@ -52,6 +55,43 @@ public class SimulatorImpl implements Simulator {
 			Thread.sleep(delta);
 		}
 
+	}
+
+	private EnergyMeasureTupleDTO getDatastreamTupleByTimestamp(String targetTS){
+		String queryStatement = "SELECT * " + 
+								"FROM " + meterDatabaseTable + 
+								"WHERE measure_timestamp > "+"\'"+targetTS+"\'"+ 
+								"LIMIT 1"; //just in case
+		try {
+			return buildDtoFromResultSet(executeQuery(queryStatement));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private EnergyMeasureTupleDTO buildDtoFromResultSet(ResultSet rs){
+		EnergyMeasureTupleDTO resDTO = null;
+		try {
+			if(rs.next()) {
+				String measure_ts = rs.getString(1);
+				String location = rs.getString(2);
+				resDTO = new EnergyMeasureTupleDTO(measure_ts, location);
+				resDTO.setPh1Ampere(rs.getString(3));
+				resDTO.setPh1PowerFactor(rs.getString(4));
+				resDTO.setPh1Volt(rs.getString(5));
+				resDTO.setPh2Ampere(rs.getString(6));
+				resDTO.setPh2PowerFactor(rs.getString(7));
+				resDTO.setPh2Volt(rs.getString(8));
+				resDTO.setPh3Ampere(rs.getString(9));
+				resDTO.setPh3PowerFactor(rs.getString(10));
+				resDTO.setPh3Volt(rs.getString(11));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return resDTO;
 	}
 
 	private long getDeltaBetweenTuples(String ts1, String ts2) {
