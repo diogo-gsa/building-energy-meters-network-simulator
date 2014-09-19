@@ -20,17 +20,12 @@ public class ClientApp implements SimulatorClient {
 		
 		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
 		sim.registerNewClient(client);
-		
-		long start = System.currentTimeMillis();
 		sim.start();
-		System.out.println("TotalTime= "+(System.currentTimeMillis()-start)+" ms");
-	
 	}
 
 	@Override
 	public void receiveDatastream(EnergyMeasureTupleDTO tuple) {
 		System.out.println("ClientReceives: "+tuple+"\n");
 	}
-
 
 }
