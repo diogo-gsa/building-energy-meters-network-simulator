@@ -31,55 +31,86 @@ public class SimulatorImpl implements Simulator {
 	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
 	private volatile int speedTimeFactor = 1;
 	private long simulationStartTime = 0;
-	private volatile boolean keepWalking = false;
 	private boolean alreadyStarted = false;
 	private EnergyMeter meter = null;
+	
+	RoadRunner rr = null;
+	
 	
 	public SimulatorImpl(EnergyMeter em) {
 		meter = em;
 	}
 
 	public void start() {
-		keepWalking = true;
+		//keepWalking = true; //TODO saftety?
 		if (!alreadyStarted) {
 			database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
 			meterDatabaseTable = getMeterDatabaseTable(meter);
 			tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
 			simulationStartTime = System.currentTimeMillis();
-			RoadRunner rr = new RoadRunner();
-			rr.start();
+			rr = new RoadRunner();
+			rr.start(); //Start Thread
 			alreadyStarted = true;
+		}
+		else{
+			rr.resumeRunner();
 		}
 	}
 
 	public void stop() { 
-		keepWalking = false;
+		rr.pauseRunner();
 	}
 
 	private class RoadRunner extends Thread {
+		
+		private volatile boolean keepWalking = true;
+		
 		@Override
 		public void run() {
 			long delta = 0;
 			while (true) {
-				while (keepWalking) {
-					EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
-					pushDatastreamToClients(tupleDTO);
-					delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
-					if (delta == -1) {
-						String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
-						System.out.println("The end of database has been reached. Simulation completed! (" + duration + ")");
-						return;
-					}
-					tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
-					try {
-						Thread.sleep(delta/speedTimeFactor);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+				System.out.println("loop!");
+				shouldIkeepWalking();
+				EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
+				pushDatastreamToClients(tupleDTO);
+				delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
+				if (delta == -1) {
+					String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
+					System.out.println("The end of database has been reached. Simulation completed! (" + duration + ")");
+					return;
+				}
+				tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
+				try {
+					Thread.sleep(delta/speedTimeFactor);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
 		}
-
+		
+		public synchronized void resumeRunner(){
+			keepWalking = true;
+			notifyAll();
+			System.out.println("notifyAll");
+		}
+		
+		public void pauseRunner(){
+			keepWalking = false;
+		}
+		
+		private synchronized void shouldIkeepWalking(){
+			while (!keepWalking) {
+				try {
+					
+					System.out.println("wait");
+					wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	
+	
 	}
 
 	public boolean setSpeedTimeFactor(int newFactor) {
