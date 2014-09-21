@@ -30,7 +30,7 @@ public class SimulatorImpl implements Simulator {
 	private TimestampIndexPair tsIndexPair = null;
 	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
 	private volatile int speedTimeFactor = 1;
-	private long simulationStartTime = 0;
+	
 	private boolean alreadyStarted = false;
 	private EnergyMeter meter = null;
 	
@@ -42,12 +42,10 @@ public class SimulatorImpl implements Simulator {
 	}
 
 	public void start() {
-		//keepWalking = true; //TODO saftety?
 		if (!alreadyStarted) {
 			database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
 			meterDatabaseTable = getMeterDatabaseTable(meter);
 			tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
-			simulationStartTime = System.currentTimeMillis();
 			rr = new RoadRunner();
 			rr.start(); //Start Thread
 			alreadyStarted = true;
@@ -58,25 +56,37 @@ public class SimulatorImpl implements Simulator {
 	}
 
 	public void stop() { 
-		rr.pauseRunner();
+		try{
+			rr.pauseRunner();
+		}catch(NullPointerException e){
+			System.out.println("[ERROR]: Simulator is not yet started!");
+		}
 	}
 
 	private class RoadRunner extends Thread {
 		
 		private volatile boolean keepWalking = true;
+		private long simulationStartTime = 0;
+		private String simulationFirstTS = null;
+		private String simulationLastTS = null;
+		
 		
 		@Override
 		public void run() {
 			long delta = 0;
+			simulationStartTime = System.currentTimeMillis();
 			while (true) {
-				System.out.println("loop!");
-				shouldIkeepWalking();
+				shouldIkeepWalking(); // to avoid active waiting when sim. is paused 
 				EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
 				pushDatastreamToClients(tupleDTO);
+				if(simulationFirstTS == null){ //first record
+					simulationFirstTS = tupleDTO.getMeasureTS();
+				}
 				delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
-				if (delta == -1) {
+				if (delta == -1) { // if pairs 2nd element == null, meaning that 1st is the last database record
+					simulationLastTS = tsIndexPair.getFirstTS();
 					String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
-					System.out.println("The end of database has been reached. Simulation completed! (" + duration + ")");
+					System.out.println("Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
 					return;
 				}
 				tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
@@ -91,7 +101,6 @@ public class SimulatorImpl implements Simulator {
 		public synchronized void resumeRunner(){
 			keepWalking = true;
 			notifyAll();
-			System.out.println("notifyAll");
 		}
 		
 		public void pauseRunner(){
@@ -101,8 +110,6 @@ public class SimulatorImpl implements Simulator {
 		private synchronized void shouldIkeepWalking(){
 			while (!keepWalking) {
 				try {
-					
-					System.out.println("wait");
 					wait();
 				} catch (InterruptedException e) {
 					e.printStackTrace();

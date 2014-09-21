@@ -21,17 +21,11 @@ public class ClientApp implements SimulatorClient {
 		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
 		sim.registerNewClient(client);
 		sim.start();
-		Thread.sleep(4000);
-		sim.stop();
-		System.out.println("Pause !!!");
-		Thread.sleep(10000);
-		sim.start();
-		System.out.println("Continue !!!");
 	}
 	
 	@Override
 	public void receiveDatastream(EnergyMeasureTupleDTO tuple) {
-		System.out.println("ClientReceives: "+tuple+"\n");
+		System.out.println("ClientReceives: "+tuple);
 	}
 
 }
