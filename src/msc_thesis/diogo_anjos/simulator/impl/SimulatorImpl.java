@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ public class SimulatorImpl implements Simulator {
 	private TimestampIndexPair tsIndexPair = null;
 	private List<SimulatorClient> clientsLits = new ArrayList<SimulatorClient>();
 	private volatile int speedTimeFactor = 1;
+	private String initialSimulationTS = null;
+	private String finalSimulationTS = null;
 	
 	private boolean alreadyStarted = false;
 	private EnergyMeter meter = null;
@@ -39,6 +42,18 @@ public class SimulatorImpl implements Simulator {
 	
 	public SimulatorImpl(EnergyMeter em) {
 		meter = em;
+	}
+	
+	public SimulatorImpl(EnergyMeter em, String initialTS, String finalTS) throws Exception {
+		meter = em;
+		TimestampIndexPair validatedPair = validateInputTimestamps(initialTS, finalTS);
+		initialSimulationTS = validatedPair.getFirstTS();
+		finalSimulationTS = validatedPair.getSecondTS();
+		System.out.println("DEBUG Test: "+ initialSimulationTS+" | "+finalSimulationTS);
+	}
+	
+	public String debugFoo(){
+		return "DEBUG Foo: "+ initialSimulationTS+" | "+finalSimulationTS;
 	}
 
 	public void start() {
@@ -116,9 +131,7 @@ public class SimulatorImpl implements Simulator {
 				}
 			}
 		}
-	
-	
-	}
+	}// RoadRunner class EOF
 
 	public boolean setSpeedTimeFactor(int newFactor) {
 		if (newFactor > 0) {
@@ -206,6 +219,30 @@ public class SimulatorImpl implements Simulator {
 		return executeQueryAndBuildResultPair(queryStatement);
 	}
 
+	/* Receives a TS as input and returns the very next TS in ascending order.
+	 * If the input TS exists in the database, then this same TS will be the returned TS.
+	 * This method serves mainly to validate the TS values passed by the client.
+	 * If TS belongs to data, return this same TS, otherwise returns the very next TS belonging 
+	 * to the database.
+	 */
+	private TimestampIndexPair getNearestMeasureTimestamp(String tsToValidate, TimestampIndexPair result){
+		String queryStatement = "SELECT measure_timestamp " + 
+								"FROM " + meterDatabaseTable + 
+								"WHERE measure_timestamp >= " + "\'" + tsToValidate + "\'" +
+								" ORDER BY measure_timestamp ASC " + 
+								"LIMIT 1";
+		try {
+			ResultSet rs = executeQuery(queryStatement);
+			while (rs.next()) {
+				result.addTS(rs.getString(1));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	
 	private TimestampIndexPair executeQueryAndBuildResultPair(String queryStatement) {
 		try {
 			ResultSet rs = executeQuery(queryStatement);
@@ -345,7 +382,7 @@ public class SimulatorImpl implements Simulator {
 
 	}
 
-	private static String milisecondsTo_HH_MM_SS_format(long miliseconds) {
+	private String milisecondsTo_HH_MM_SS_format(long miliseconds) {
 		long seconds = miliseconds / 1000;
 		long ms = miliseconds % 1000;
 		long s = seconds % 60;
@@ -353,5 +390,23 @@ public class SimulatorImpl implements Simulator {
 		long h = (seconds / (60 * 60));
 		return String.format("%d:%02d:%02d:%03d", h, m, s, ms);
 	}
+	
+	private TimestampIndexPair validateInputTimestamps(String initialTS, String finalTS) throws Exception{
+		TimestampIndexPair resPair = new TimestampIndexPair();
+		if(getDeltaBetweenTuples(finalTS, initialTS) > 0){
+			throw new Exception("[Error]: initialTS > finalTS. This does not make sense!");
+		}
+		//function will be placed in *res* TimestampIndexPair
+		getNearestMeasureTimestamp(initialTS, resPair);
+		if(resPair.getFirstTS()==null){
+			throw new Exception("[Error]: There is any ts >= "+initialTS+" valid in the Database.");
+		}
+		getNearestMeasureTimestamp(finalTS, resPair);
+		if(resPair.getSecondTS()==null){
+			throw new Exception("[Error]: There is any ts >= "+finalTS+" valid in the Database.");
+		}
+		return resPair;
+	} 
 
-}
+	
+}// SimulatorImpl class EOF

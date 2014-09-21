@@ -18,9 +18,18 @@ public class ClientApp implements SimulatorClient {
 
 		SimulatorClient client = new ClientApp();
 		
-		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
-		sim.registerNewClient(client);
-		sim.start();
+//		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
+//		sim.registerNewClient(client);
+//		sim.start();
+		
+		try { //TODO ESTOU A TESTAR ISTO!!!
+			SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST, "2014-01-01 00:00:01", "2014-01-01 00:00:15");
+			sim.debugFoo();	
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
 	}
 	
 	@Override
