@@ -5,8 +5,6 @@ package msc_thesis.diogo_anjos.client;
  * 
  */
 
-import java.text.ParseException;
-
 import msc_thesis.diogo_anjos.simulator.EnergyMeasureTupleDTO;
 import msc_thesis.diogo_anjos.simulator.EnergyMeter;
 import msc_thesis.diogo_anjos.simulator.SimulatorClient;
@@ -14,23 +12,20 @@ import msc_thesis.diogo_anjos.simulator.impl.SimulatorImpl;
 
 public class ClientApp implements SimulatorClient {
 
-	public static void main(String[] args) throws ParseException, InterruptedException {
-
+	public static void main(String[] args)  {
+		
 		SimulatorClient client = new ClientApp();
-		
-//		SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST);
-//		sim.registerNewClient(client);
-//		sim.start();
-		
-		try { //TODO ESTOU A TESTAR ISTO!!!
-			SimulatorImpl sim = new SimulatorImpl(EnergyMeter.TEST, "2014-01-01 00:00:01", "2014-01-01 00:00:15");
-			sim.debugFoo();	
-		} catch (Exception e) {
+				
+		SimulatorImpl sim = null;
+		try { 
+			 sim = new SimulatorImpl(EnergyMeter.TEST, "2014-01-01 00:00:00", "2014-01-01 00:00:15");
+			 sim.registerNewClient(client);
+			 sim.start();
+		}catch (Exception e) {
 			e.printStackTrace();
-		}
-		
-		
+		}	
 	}
+	
 	
 	@Override
 	public void receiveDatastream(EnergyMeasureTupleDTO tuple) {

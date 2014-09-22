@@ -10,14 +10,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import msc_thesis.diogo_anjos.simulator.EnergyMeasureTupleDTO;
 import msc_thesis.diogo_anjos.simulator.EnergyMeter;
@@ -41,26 +39,27 @@ public class SimulatorImpl implements Simulator {
 	
 	
 	public SimulatorImpl(EnergyMeter em) {
-		meter = em;
+		setupDB(em);
+		tsIndexPair = getInitialMeasureTimestamp();
 	}
 	
 	public SimulatorImpl(EnergyMeter em, String initialTS, String finalTS) throws Exception {
-		meter = em;
+		setupDB(em);
 		TimestampIndexPair validatedPair = validateInputTimestamps(initialTS, finalTS);
 		initialSimulationTS = validatedPair.getFirstTS();
 		finalSimulationTS = validatedPair.getSecondTS();
-		System.out.println("DEBUG Test: "+ initialSimulationTS+" | "+finalSimulationTS);
+		tsIndexPair = getInitialMeasureTimestamp(initialSimulationTS);
 	}
 	
-	public String debugFoo(){
-		return "DEBUG Foo: "+ initialSimulationTS+" | "+finalSimulationTS;
+	private void setupDB(EnergyMeter em){
+		meter = em;
+		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
+		meterDatabaseTable = getMeterDatabaseTable(meter);
 	}
+	
 
 	public void start() {
 		if (!alreadyStarted) {
-			database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
-			meterDatabaseTable = getMeterDatabaseTable(meter);
-			tsIndexPair = getInitialMeasureTimestamp(meterDatabaseTable);
 			rr = new RoadRunner();
 			rr.start(); //Start Thread
 			alreadyStarted = true;
@@ -91,20 +90,15 @@ public class SimulatorImpl implements Simulator {
 			long delta = 0;
 			simulationStartTime = System.currentTimeMillis();
 			while (true) {
-				shouldIkeepWalking(); // to avoid active waiting when sim. is paused 
-				EnergyMeasureTupleDTO tupleDTO = getDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
-				pushDatastreamToClients(tupleDTO);
-				if(simulationFirstTS == null){ //first record
-					simulationFirstTS = tupleDTO.getMeasureTS();
-				}
+				checkPauseWaitCondition(); // to avoid active waiting when sim. is paused 
+				EnergyMeasureTupleDTO currentIndexDTO = queryDatastreamTupleByTimestamp(tsIndexPair.getFirstTS());
+				pushDatastreamToClients(currentIndexDTO);
+				ifInitialTimestampThenRegist(currentIndexDTO);
 				delta = getDeltaBetweenTuples(tsIndexPair.getFirstTS(), tsIndexPair.getSecondTS());
-				if (delta == -1) { // if pairs 2nd element == null, meaning that 1st is the last database record
-					simulationLastTS = tsIndexPair.getFirstTS();
-					String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
-					System.out.println("Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
+				if(checkStopCondition(delta)){
 					return;
 				}
-				tsIndexPair = getNextTwoMeasureTimestamps(meterDatabaseTable, tsIndexPair.getFirstTS());
+				tsIndexPair = queryTwoNextTimestamps(tsIndexPair.getFirstTS());
 				try {
 					Thread.sleep(delta/speedTimeFactor);
 				} catch (InterruptedException e) {
@@ -112,6 +106,24 @@ public class SimulatorImpl implements Simulator {
 				}
 			}
 		}
+		
+		private boolean checkStopCondition(long delta){
+			// if pairs 2nd element == null, meaning that 1st is the last database record
+			if(delta == -1 || (tsIndexPair.getFirstTS().equals(finalSimulationTS))) { 
+				simulationLastTS = tsIndexPair.getFirstTS();
+				String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
+				System.out.println("Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
+				return true;
+			}
+			return false;
+		}
+		
+		private void ifInitialTimestampThenRegist(EnergyMeasureTupleDTO tuple){
+			if(simulationFirstTS == null){ //first record
+				simulationFirstTS = tuple.getMeasureTS();
+			}
+		}
+		
 		
 		public synchronized void resumeRunner(){
 			keepWalking = true;
@@ -122,7 +134,7 @@ public class SimulatorImpl implements Simulator {
 			keepWalking = false;
 		}
 		
-		private synchronized void shouldIkeepWalking(){
+		private synchronized void checkPauseWaitCondition(){
 			while (!keepWalking) {
 				try {
 					wait();
@@ -146,7 +158,7 @@ public class SimulatorImpl implements Simulator {
 		return speedTimeFactor;
 	}
 
-	private EnergyMeasureTupleDTO getDatastreamTupleByTimestamp(String targetTS) {
+	private EnergyMeasureTupleDTO queryDatastreamTupleByTimestamp(String targetTS) {
 		String queryStatement = "SELECT * " + 
 								"FROM " + meterDatabaseTable + 
 								"WHERE measure_timestamp = " + "\'" + targetTS + "\'" + 
@@ -184,7 +196,6 @@ public class SimulatorImpl implements Simulator {
 	}
 
 	private long getDeltaBetweenTuples(String ts1, String ts2) {
-		long res;
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date ts1Date = null;
@@ -203,7 +214,7 @@ public class SimulatorImpl implements Simulator {
 		return (ts2Date.getTime() - ts1Date.getTime());
 	}
 
-	private TimestampIndexPair getNextTwoMeasureTimestamps(String meterDatabaseTable, String pivotTimestamp) {
+	private TimestampIndexPair queryTwoNextTimestamps(String pivotTimestamp) {
 		String queryStatement = "SELECT measure_timestamp " + 
 								"FROM " + meterDatabaseTable + 
 								"WHERE measure_timestamp > " + "\'" + pivotTimestamp + "\'" +
@@ -211,9 +222,18 @@ public class SimulatorImpl implements Simulator {
 		return executeQueryAndBuildResultPair(queryStatement);
 	}
 
-	private TimestampIndexPair getInitialMeasureTimestamp(String meterDatabaseTable) {
+	private TimestampIndexPair getInitialMeasureTimestamp() {
 		String queryStatement = "SELECT measure_timestamp " + 
 								"FROM " + meterDatabaseTable + 
+								"ORDER BY measure_timestamp ASC " + 
+								"LIMIT 2";
+		return executeQueryAndBuildResultPair(queryStatement);
+	}
+	
+	private TimestampIndexPair getInitialMeasureTimestamp(String pivotTimestamp) {
+		String queryStatement = "SELECT measure_timestamp " + 
+								"FROM " + meterDatabaseTable + 
+								"WHERE measure_timestamp >= " + "\'" + pivotTimestamp + "\'" +
 								"ORDER BY measure_timestamp ASC " + 
 								"LIMIT 2";
 		return executeQueryAndBuildResultPair(queryStatement);
@@ -322,21 +342,6 @@ public class SimulatorImpl implements Simulator {
 		}
 	}
 
-	private String incrementSecondsToDate(String date, long seconds) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		Date initialDate;
-		try {
-			initialDate = sdf.parse(date);
-			Date incrementedDate = new Date(initialDate.getTime() + TimeUnit.SECONDS.toMillis(seconds));
-			return sdf.format(incrementedDate.getTime());
-		} catch (ParseException e) {
-			System.out.println("[Error]: There is a problem with input's date format");
-			e.printStackTrace();
-			return null;
-		}
-	}
-
 	private class TimestampIndexPair {
 
 		private String firstTS = null;
@@ -391,22 +396,42 @@ public class SimulatorImpl implements Simulator {
 		return String.format("%d:%02d:%02d:%03d", h, m, s, ms);
 	}
 	
-	private TimestampIndexPair validateInputTimestamps(String initialTS, String finalTS) throws Exception{
+	private TimestampIndexPair validateInputTimestamps(String initialTS, String finalTS) {
 		TimestampIndexPair resPair = new TimestampIndexPair();
 		if(getDeltaBetweenTuples(finalTS, initialTS) > 0){
-			throw new Exception("[Error]: initialTS > finalTS. This does not make sense!");
+			throw new IllegalArgumentException("[Error]: Params. initialTS > finalTS. This does not make sense!");
 		}
-		//function will be placed in *res* TimestampIndexPair
 		getNearestMeasureTimestamp(initialTS, resPair);
 		if(resPair.getFirstTS()==null){
-			throw new Exception("[Error]: There is any ts >= "+initialTS+" valid in the Database.");
+			throw new IllegalArgumentException("[Error]: Does not exist a TS >= "+initialTS+" in the Database.");
 		}
 		getNearestMeasureTimestamp(finalTS, resPair);
 		if(resPair.getSecondTS()==null){
-			throw new Exception("[Error]: There is any ts >= "+finalTS+" valid in the Database.");
+			throw new IllegalArgumentException("[Error]: Does not exist a TS >= "+finalTS+"  in the Database.");
 		}
 		return resPair;
 	} 
 
+	@Override
+	public String toString() {
+		return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: " 
+				+ initialSimulationTS + " to "+finalSimulationTS;
+	}
+	
+	/* This method is not necessary for now.
+	private String incrementSecondsToDate(String date, long seconds) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		Date initialDate;
+		try {
+			initialDate = sdf.parse(date);
+			Date incrementedDate = new Date(initialDate.getTime() + TimeUnit.SECONDS.toMillis(seconds));
+			return sdf.format(incrementedDate.getTime());
+		} catch (ParseException e) {
+			System.out.println("[Error]: There is a problem with input's date format");
+			e.printStackTrace();
+			return null;
+		}
+	}*/
 	
 }// SimulatorImpl class EOF
