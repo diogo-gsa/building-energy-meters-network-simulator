@@ -414,8 +414,11 @@ public class SimulatorImpl implements Simulator {
 
 	@Override
 	public String toString() {
-		return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: " 
-				+ initialSimulationTS + " to "+finalSimulationTS;
+		if(initialSimulationTS != null && finalSimulationTS != null){
+			return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: " 
+					+ initialSimulationTS + " to "+finalSimulationTS;
+		}
+		return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: all database";
 	}
 	
 	/* This method is not necessary for now.
