@@ -6,6 +6,7 @@ package msc_thesis.diogo_anjos.simulator;
 
 public enum EnergyMeter {
 	
+	// The Real Time Series
 	LIBRARY			(" simulator.library_measures "),
     LECTUREHALL_A4	(" simulator.lecturehall_a4_measures "),
     LECTUREHALL_A5	(" simulator.lecturehall_a5_measures "),

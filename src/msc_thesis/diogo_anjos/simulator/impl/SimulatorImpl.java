@@ -315,34 +315,6 @@ public class SimulatorImpl implements Simulator {
 		}
 	}
 	
-	/*
-	private String getMeterDatabaseTable(EnergyMeter em) {
-		switch (em) {
-			case LIBRARY:
-				return " simulator.library_measures ";
-			case LECTUREHALL_A4:
-				return " simulator.lecturehall_a4_measures ";
-			case LECTUREHALL_A5:
-				return " simulator.lecturehall_a5_measures ";
-			case CLASSROOM_1_17:
-				return " simulator.\"classroom_1.17_measures\" ";
-			case CLASSROOM_1_19:
-				return " simulator.\"classroom_1.19_measures\" ";
-			case DEPARTMENT_14:
-				return " simulator.department_14_measures ";
-			case DEPARTMENT_16:
-				return " simulator.department_16_measures ";
-			case LAB_1_58_MIT:
-				return " simulator.\"lab_1.58_mit_measures\" ";
-			case UTA_A4:
-				return " simulator.uta_a4_measures ";
-			case TEST:
-				return " simulator_test.test ";
-			default:
-				return null;
-		}
-	}*/
-
 	private class TimestampIndexPair {
 
 		private String firstTS = null;
