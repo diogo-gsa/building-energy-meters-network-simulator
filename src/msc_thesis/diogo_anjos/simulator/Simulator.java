@@ -9,9 +9,6 @@ public interface Simulator {
 
 	public void registerNewClient(SimulatorClient client);
 	
-	//TODO the existence of a given constructor in a interface? NO! Choose an abstract class instead!
-	
-	
 	public void start();
 	
 	public void stop();

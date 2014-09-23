@@ -54,7 +54,7 @@ public class SimulatorImpl implements Simulator {
 	private void setupDB(EnergyMeter em){
 		meter = em;
 		database = connectToDB("localhost", "5432", "lumina_db", "postgres", "root");
-		meterDatabaseTable = getMeterDatabaseTable(meter);
+		meterDatabaseTable = meter.getDatabaseTable();
 	}
 	
 
@@ -314,7 +314,8 @@ public class SimulatorImpl implements Simulator {
 			// e.printStackTrace();
 		}
 	}
-
+	
+	/*
 	private String getMeterDatabaseTable(EnergyMeter em) {
 		switch (em) {
 			case LIBRARY:
@@ -340,7 +341,7 @@ public class SimulatorImpl implements Simulator {
 			default:
 				return null;
 		}
-	}
+	}*/
 
 	private class TimestampIndexPair {
 
@@ -415,7 +416,7 @@ public class SimulatorImpl implements Simulator {
 	@Override
 	public String toString() {
 		if(initialSimulationTS != null && finalSimulationTS != null){
-			return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: " 
+			return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: "
 					+ initialSimulationTS + " to "+finalSimulationTS;
 		}
 		return 	"Database table: " + meterDatabaseTable + ", simulation boundaries: all database";
