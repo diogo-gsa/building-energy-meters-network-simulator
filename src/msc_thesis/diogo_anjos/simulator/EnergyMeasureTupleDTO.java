@@ -105,8 +105,19 @@ public class EnergyMeasureTupleDTO {
 	public Double getPh3Volt() {
 		return ph3_volt;
 	}
+
+	public Double getPh1Consumption(){
+		return ph1_ampere*ph1_powerFactor*ph1_volt;
+	}
 	
+	public Double getPh2Consumption(){
+		return ph2_ampere*ph2_powerFactor*ph2_volt;
+	}
 	
+	public Double getPh3Consumption(){
+		return ph3_ampere*ph3_powerFactor*ph3_volt;
+	}
+
 	private double stringToDouble(String value){
 		return Double.parseDouble(value);
 	}
@@ -114,9 +125,9 @@ public class EnergyMeasureTupleDTO {
 	@Override
 	public String toString() {
 		return "<ts="+measure_ts+",location="+meter_location+
-				",ph1{a="+ph1_ampere+",pf="+ph1_powerFactor+",v="+ph1_volt+"}," +
-				"ph2{a="+ph2_ampere+",pf="+ph2_powerFactor+",v="+ph2_volt+"}," +
-				"ph3{a="+ph3_ampere+",pf="+ph3_powerFactor+",v="+ph3_volt+"}>";
+				",ph1{a="+ph1_ampere+",pf="+ph1_powerFactor+",v="+ph1_volt+"}="+getPh1Consumption()+"," +
+				"ph2{a="+ph2_ampere+",pf="+ph2_powerFactor+",v="+ph2_volt+"}="+getPh2Consumption()+"," +
+				"ph3{a="+ph3_ampere+",pf="+ph3_powerFactor+",v="+ph3_volt+"}="+getPh3Consumption()+">";
 	}
 	
 }

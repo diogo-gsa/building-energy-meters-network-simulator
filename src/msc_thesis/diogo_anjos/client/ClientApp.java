@@ -23,9 +23,10 @@ public class ClientApp implements SimulatorClient {
 		Simulator sim = null;
 		try { 
 			 
-			 sim = new SimulatorImpl(EnergyMeter.LIBRARY, "2014-04-29 11:34:49", "2014-04-29 11:40:05");
+			 sim = new SimulatorImpl(EnergyMeter.TEST_FIRST, "2014-01-01 00:00:01", "2014-01-01 00:00:15");
 			 System.out.println(sim.toString());
 			 sim.registerNewClient(client);
+			 sim.setSpeedTimeFactor(2);
 			 sim.start();
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -40,7 +41,7 @@ public class ClientApp implements SimulatorClient {
 		if(lastTS != 0){
 			delta = (System.currentTimeMillis()-lastTS)/1000;
 		}	
-		System.out.println("ClientReceives: "+tuple+" delta: "+delta+"\n");
+		System.out.println("ClientReceives: "+tuple+" delta: "+delta+" sec");
 		lastTS = System.currentTimeMillis(); //Debug
 	
 	}
