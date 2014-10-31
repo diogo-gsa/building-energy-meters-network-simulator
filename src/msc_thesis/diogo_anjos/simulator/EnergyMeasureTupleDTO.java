@@ -5,20 +5,20 @@ package msc_thesis.diogo_anjos.simulator;
  */
 public class EnergyMeasureTupleDTO {
 
-	private String measure_ts = null;
-	private String meter_location = null;
+	private String measure_ts 		= null;
+	private String meter_location 	= null;
 	
-	private Double ph1_ampere = null;
-	private Double ph1_powerFactor = null;
-	private Double ph1_volt = null;
+	private Double ph1_ampere 		= null;
+	private Double ph1_powerFactor 	= null;
+	private Double ph1_volt 		= null;
 	
-	private Double ph2_ampere = null;
-	private Double ph2_powerFactor = null;
-	private Double ph2_volt = null;
+	private Double ph2_ampere 		= null;
+	private Double ph2_powerFactor 	= null;
+	private Double ph2_volt 		= null;
 	
-	private Double ph3_ampere = null;
-	private Double ph3_powerFactor = null;
-	private Double ph3_volt = null;
+	private Double ph3_ampere 		= null;
+	private Double ph3_powerFactor 	= null;
+	private Double ph3_volt 		= null;
 	
 	
 	public EnergyMeasureTupleDTO(String ts, String location){
