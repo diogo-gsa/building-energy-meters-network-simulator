@@ -46,4 +46,11 @@ public class ClientApp implements SimulatorClient {
 	
 	}
 
+
+	@Override
+	public void simulationHasFinishedNotification() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -113,6 +113,7 @@ public class SimulatorImpl implements Simulator {
 				simulationLastTS = tsIndexPair.getFirstTS();
 				String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
 				System.out.println("Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
+				notifyClientsThatSimulationHasFinished();
 				return true;
 			}
 			return false;
@@ -351,6 +352,13 @@ public class SimulatorImpl implements Simulator {
 	private void pushDatastreamToClients(EnergyMeasureTupleDTO tuple) {
 		for (SimulatorClient sc : clientsLits) {
 			sc.receiveDatastream(tuple);
+		}
+	}
+	
+	private void notifyClientsThatSimulationHasFinished() {
+		// so they do not continue in the wainting state for more tuples
+		for (SimulatorClient sc : clientsLits) {
+			sc.simulationHasFinishedNotification();
 		}
 	}
 
