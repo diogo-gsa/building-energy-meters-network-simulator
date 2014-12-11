@@ -60,7 +60,8 @@ public class SimulatorImpl implements Simulator {
 
 	public void start() {
 		if (!alreadyStarted) {
-			rr = new RoadRunner();
+			notifyClientsThatSimulationHasStarted();
+			rr = new RoadRunner(meter);
 			rr.start(); //Start Thread
 			alreadyStarted = true;
 		}
@@ -83,6 +84,11 @@ public class SimulatorImpl implements Simulator {
 		private long simulationStartTime = 0;
 		private String simulationFirstTS = null;
 		private String simulationLastTS = null;
+		private EnergyMeter simulatedMeter;
+		
+		public RoadRunner(EnergyMeter em){
+			simulatedMeter = em;
+		}
 		
 		
 		@Override
@@ -112,7 +118,7 @@ public class SimulatorImpl implements Simulator {
 			if(delta == -1 || (tsIndexPair.getFirstTS().equals(finalSimulationTS))) { 
 				simulationLastTS = tsIndexPair.getFirstTS();
 				String duration = milisecondsTo_HH_MM_SS_format(System.currentTimeMillis() - simulationStartTime);
-				System.out.println("Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
+				System.out.println("["+simulatedMeter+"]"+" Simulation completed! From "+simulationFirstTS+" to "+simulationLastTS+" in "+duration+"ms");
 				notifyClientsThatSimulationHasFinished();
 				return true;
 			}
@@ -355,10 +361,20 @@ public class SimulatorImpl implements Simulator {
 		}
 	}
 	
-	private void notifyClientsThatSimulationHasFinished() {
-		// so they do not continue in the wainting state for more tuples
+	
+	private void notifyClientsThatSimulationHasStarted() {
+		// so they the clients may know how many meters has started
+		// so they may know for how many meters they should wait so 
+		// they can properly assume that the simulation has finished
 		for (SimulatorClient sc : clientsLits) {
-			sc.simulationHasFinishedNotification();
+			sc.simulationHasStartedNotification(this.meter);
+		}
+	}
+	
+	private void notifyClientsThatSimulationHasFinished() {
+		// so they do not continue in the waiting state for more tuples
+		for (SimulatorClient sc : clientsLits) {
+			sc.simulationHasFinishedNotification(this.meter);
 		}
 	}
 

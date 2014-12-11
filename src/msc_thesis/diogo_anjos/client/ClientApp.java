@@ -46,11 +46,13 @@ public class ClientApp implements SimulatorClient {
 	
 	}
 
-
 	@Override
-	public void simulationHasFinishedNotification() {
-		// TODO Auto-generated method stub
-		
+	public void simulationHasStartedNotification(EnergyMeter em) {
+		// TODO Auto-generated method stub		
 	}
 
+	@Override
+	public void simulationHasFinishedNotification(EnergyMeter em) {
+		// TODO Auto-generated method stub	
+	}
 }
