@@ -11,6 +11,8 @@ import msc_thesis.diogo_anjos.simulator.Simulator;
 import msc_thesis.diogo_anjos.simulator.SimulatorClient;
 import msc_thesis.diogo_anjos.simulator.impl.SimulatorImpl;
 
+// Testing Migration from GitHub to Bitbucket
+
 public class ClientApp implements SimulatorClient {
 
 	private long lastTS = 0;
