@@ -22,11 +22,10 @@ public class ClientApp implements SimulatorClient {
 				
 		Simulator sim = null;
 		try { 
-			 
-			 sim = new SimulatorImpl(EnergyMeter.TEST_FIRST, "2014-01-01 00:00:01", "2014-01-01 00:00:15");
+			 sim = new SimulatorImpl(EnergyMeter.LIBRARY, "2014-03-17 08:00:00", "2014-03-17 08:05:00");
 			 System.out.println(sim.toString());
 			 sim.registerNewClient(client);
-			 sim.setSpeedTimeFactor(2);
+			 sim.setSpeedTimeFactor(1);
 			 sim.start();
 		}catch (Exception e) {
 			e.printStackTrace();

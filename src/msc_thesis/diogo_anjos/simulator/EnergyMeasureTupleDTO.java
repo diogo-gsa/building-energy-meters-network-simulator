@@ -1,8 +1,10 @@
 package msc_thesis.diogo_anjos.simulator;
+
 /*
  * @author Diogo Anjos (diogo.silva.anjos@tecnico.ulisboa.pt)
  * 
  */
+
 public class EnergyMeasureTupleDTO {
 
 	private String measure_ts 		= null;
@@ -128,6 +130,15 @@ public class EnergyMeasureTupleDTO {
 				",ph1{a="+ph1_ampere+",pf="+ph1_powerFactor+",v="+ph1_volt+"}="+getPh1Consumption()+"," +
 				"ph2{a="+ph2_ampere+",pf="+ph2_powerFactor+",v="+ph2_volt+"}="+getPh2Consumption()+"," +
 				"ph3{a="+ph3_ampere+",pf="+ph3_powerFactor+",v="+ph3_volt+"}="+getPh3Consumption()+">";
+	}
+	
+	
+	public String dumpPhases() {
+		return "<ts="+measure_ts
+				+", location=" +meter_location
+				+", phase_1 = "+getPh1Consumption()
+				+", pahse_2 = "+getPh2Consumption()
+				+", phase_3 = "+getPh3Consumption()+">";
 	}
 	
 }
