@@ -1,8 +1,9 @@
 # Simulator of Building Energy Meters Network 
 ###### Simulator of the Energy Meters Network that is deployed at IST Taguspark campus.
 
-
 This software package is part of the research work that was developed under the scope of the Master Thesis stated bellow and, for auditing purposes, the Simulator's implementation code is made available through this repository.
+
+![alt tag](http://web.ist.utl.pt/~ist162490/publications/SimulatorAndTagusBlueprintGitHubPic.png)
 
 ---
 **Instituto Superior Técnico -  Univerisade de Lisboa, Portugal**
