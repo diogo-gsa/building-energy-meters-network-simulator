@@ -16,8 +16,6 @@ This software package is part of the research work that was developed under the 
 
 **Advisor.** Prof. Paulo Jorge Fernandes Carreira
 
-**Co-advisor.** Prof. Alexandre Paulo Lourenço Francisco
-
 **Course.** Information Systems and Computer Engineering (MEIC)
 
 **Campus.** Alameda
