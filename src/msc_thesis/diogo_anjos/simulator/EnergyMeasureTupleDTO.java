@@ -2,7 +2,8 @@ package msc_thesis.diogo_anjos.simulator;
 
 /*
  * @author Diogo Anjos (diogo.silva.anjos@tecnico.ulisboa.pt)
- * 
+ * MScThesis Solution:  Real-Time Data Processing Architecture 
+ * 						for Energy Management Applications
  */
 
 public class EnergyMeasureTupleDTO {
@@ -22,6 +23,18 @@ public class EnergyMeasureTupleDTO {
 	private Double ph3_powerFactor 	= null;
 	private Double ph3_volt 		= null;
 	
+	
+	/* Metadata to be used in the validation process */
+	long eneteringInQueueTS;
+	
+	
+	public void setEnteringInQueueTS(){
+		eneteringInQueueTS = System.nanoTime();
+	}
+	
+	public long getEnteringInQueueTS(){
+		return eneteringInQueueTS;
+	}
 	
 	public EnergyMeasureTupleDTO(String ts, String location){
 		measure_ts = ts;

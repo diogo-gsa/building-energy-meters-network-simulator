@@ -2,7 +2,8 @@ package msc_thesis.diogo_anjos.simulator.impl;
 
 /*
  * @author Diogo Anjos (diogo.silva.anjos@tecnico.ulisboa.pt)
- * 
+ * MScThesis Solution:  Real-Time Data Processing Architecture 
+ * 						for Energy Management Applications
  */
 
 import java.sql.Connection;

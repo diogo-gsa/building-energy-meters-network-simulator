@@ -1,7 +1,8 @@
 package msc_thesis.diogo_anjos.simulator;
 /*
  * @author Diogo Anjos (diogo.silva.anjos@tecnico.ulisboa.pt)
- * 
+ * MScThesis Solution:  Real-Time Data Processing Architecture 
+ * 						for Energy Management Applications
  */
 
 public enum EnergyMeter {

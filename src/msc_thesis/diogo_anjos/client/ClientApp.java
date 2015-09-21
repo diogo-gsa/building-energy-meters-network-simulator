@@ -2,7 +2,8 @@ package msc_thesis.diogo_anjos.client;
 
 /*
  * @author Diogo Anjos (diogo.silva.anjos@tecnico.ulisboa.pt)
- * 
+ * MScThesis Solution:  Real-Time Data Processing Architecture 
+ * 						for Energy Management Applications
  */
 
 import msc_thesis.diogo_anjos.simulator.EnergyMeasureTupleDTO;
